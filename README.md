@@ -1,53 +1,67 @@
-# Module 11 — Calculation Model, Pydantic Schemas & Factory Pattern
+# Module 12 - BREAD API with User Auth and Calculations
 
 **IS 601 | Python for Web API | NJIT**
 
-Builds on Module 10 by adding a `Calculation` SQLAlchemy model, Pydantic
-validation schemas, a factory pattern for arithmetic operations, and full
-unit + integration test coverage.
+Builds on Module 11 by adding full user registration/login endpoints and
+complete BREAD (Browse, Read, Edit, Add, Delete) routes for calculations,
+backed by PostgreSQL, tested with pytest, and deployed via GitHub Actions.
 
 ---
 
 ## Docker Hub
 
-Image: `niharika2701/module11-calculations-api:latest`
+Image: `niharika2701/module12-bread-api:latest`
 
 ```bash
-docker pull niharika2701/module11-calculations-api:latest
+docker pull niharika2701/module12-bread-api:latest
 ```
 
-🔗 [Docker Hub Repository](https://hub.docker.com/r/niharika2701/module11-calculations-api)
+Link: https://hub.docker.com/r/niharika2701/module12-bread-api
 
 ---
 
 ## Project Structure
-
-Module 11/
+Module 12/
 ├── app/
-│   ├── calculations.py     # OperationType enum + CalculationFactory
-│   ├── models.py           # User + Calculation SQLAlchemy models
-│   ├── schemas.py          # Pydantic schemas (UserCreate, UserRead,
-│   │                       #   CalculationCreate, CalculationRead)
-│   ├── database.py         # SQLAlchemy engine and session
-│   └── auth.py             # Password hashing
+│   ├── routers/
+│   │   ├── users.py         # Register, login, get user
+│   │   └── calculations.py  # Full BREAD endpoints
+│   ├── calculations.py      # OperationType enum + CalculationFactory
+│   ├── models.py            # User + Calculation SQLAlchemy models
+│   ├── schemas.py           # Pydantic schemas
+│   ├── database.py          # SQLAlchemy engine and session
+│   └── auth.py              # Password hashing
 ├── tests/
-│   ├── conftest.py
-│   ├── test_auth.py
-│   ├── test_schemas.py
-│   ├── test_users.py
-│   ├── test_calculations_unit.py        # Factory + schema unit tests
-│   └── test_calculations_integration.py # DB integration tests
-├── .github/
-│   └── workflows/
-│       └── ci.yml          # GitHub Actions — test + Docker Hub deploy
+│   ├── conftest.py                      # DB + client fixtures
+│   ├── test_users_integration.py        # User route tests
+│   └── test_calculations_routes.py      # Calculation BREAD tests
+├── .github/workflows/ci.yml
 ├── Dockerfile
 ├── docker-compose.yml
-├── requirements.txt
-└── requirements-dev.txt
+└── requirements.txt
+---
+
+## API Endpoints
+
+### Users
+| Method | Route | Description |
+|--------|-------|-------------|
+| POST | /users/register | Register a new user |
+| POST | /users/login | Login with username and password |
+| GET | /users/{user_id} | Get user by ID |
+
+### Calculations
+| Method | Route | Description |
+|--------|-------|-------------|
+| POST | /calculations/ | Add a new calculation |
+| GET | /calculations/ | Browse all calculations |
+| GET | /calculations/{id} | Read one calculation |
+| PUT | /calculations/{id} | Edit a calculation |
+| DELETE | /calculations/{id} | Delete a calculation |
 
 ---
 
-## How to Run Tests Locally
+## How to Run Locally
 
 ### 1. Install dependencies
 
@@ -55,48 +69,25 @@ Module 11/
 pip install -r requirements.txt
 ```
 
-### 2. Run all tests
+### 2. Run the app
 
 ```bash
-python -m pytest tests/ -v
+DATABASE_URL="sqlite:///./local.db" python -m uvicorn main:app --reload
 ```
 
-### 3. Run only calculation tests
+Open http://127.0.0.1:8000/docs to test all endpoints via the OpenAPI UI.
+
+### 3. Run tests
 
 ```bash
-# Unit tests (no database needed)
-python -m pytest tests/test_calculations_unit.py -v
-
-# Integration tests (uses SQLite locally)
-python -m pytest tests/test_calculations_integration.py -v
+python -m pytest tests/test_users_integration.py tests/test_calculations_routes.py -v
 ```
-
----
-
-## What's New in Module 11
-
-### OperationType Enum
-Defined in `app/calculations.py`. Valid values: `Add`, `Sub`, `Multiply`, `Divide`.
-Inherits from `str` so Pydantic serialises these as plain strings in JSON.
-
-### CalculationFactory
-Maps each `OperationType` to a lambda function.
-Adding a new operation = one new dictionary entry. No existing code changes.
-This is the **Open/Closed Principle** in practice.
-
-### Calculation Model
-SQLAlchemy model in `app/models.py` with fields:
-`id`, `a`, `b`, `type`, `result`, `user_id` (nullable FK → users), `created_at`.
-
-### Pydantic Schemas
-- `CalculationCreate` — validates input, rejects invalid types and division by zero
-- `CalculationRead` — serialises output including computed result
 
 ---
 
 ## CI/CD Pipeline
 
-GitHub Actions (`.github/workflows/ci.yml`) runs on every push:
+GitHub Actions runs on every push:
 
-1. **Test job** — spins up PostgreSQL 16, runs all user + calculation tests
-2. **Deploy job** — builds Docker image and pushes to Docker Hub on success
+1. **Test job** - spins up PostgreSQL 16, runs all integration tests
+2. **Deploy job** - builds and pushes Docker image to Docker Hub on success
