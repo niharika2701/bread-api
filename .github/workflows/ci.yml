@@ -1,4 +1,4 @@
-name: CI - Module 11 Calculations API
+name: CI - Module 12 Calculations API
 
 on:
   push:
@@ -49,14 +49,11 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      - name: Run user tests
-        run: python -m pytest tests/test_users.py tests/test_auth.py tests/test_schemas.py -v
+      - name: Run user integration tests
+        run: python -m pytest tests/test_users_integration.py -v
 
-      - name: Run calculation unit tests
-        run: python -m pytest tests/test_calculations_unit.py -v
-
-      - name: Run calculation integration tests
-        run: python -m pytest tests/test_calculations_integration.py -v
+      - name: Run calculation route tests
+        run: python -m pytest tests/test_calculations_routes.py -v
 
   deploy:
     name: Build and Push to Docker Hub
@@ -78,4 +75,4 @@ jobs:
         with:
           context: .
           push: true
-          tags: niharika2701/module11-calculations-api:latest
+          tags: niharika2701/module12-bread-api:latest
